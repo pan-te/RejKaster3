@@ -25,6 +25,7 @@ var
   event: pSDL_event;                        //
   rend: pSDL_renderer;                      // zmienne specyficzne dla SDL
   window:  pSDL_window;                     //
+  Keycodes:  ^byte;
 
 const
 //block_size=8;
@@ -37,14 +38,14 @@ map:array[0..15,0..15] of integer =((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1),    //Jedy
                                     (1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,1),
                                     (1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,1),
                                     (1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1),
-                                    (1,0,0,0,2,2,0,2,2,2,2,2,0,0,0,1),
-                                    (1,0,0,0,2,2,0,2,2,2,2,2,0,0,0,1),
-                                    (1,0,0,0,2,2,0,2,2,0,0,0,0,0,0,1),
                                     (1,0,0,0,2,2,2,2,2,2,2,2,0,0,0,1),
-                                    (1,0,0,0,2,2,2,2,2,2,2,2,0,0,0,1),
-                                    (1,0,0,0,0,0,0,2,2,0,2,2,0,0,0,1),
-                                    (1,0,0,0,2,2,2,2,2,0,2,2,0,0,0,1),
-                                    (1,0,0,0,2,2,2,2,2,0,2,2,0,0,0,1),
+                                    (1,0,0,0,2,0,0,0,0,0,0,2,0,0,0,1),
+                                    (1,0,0,0,2,0,2,2,2,2,0,2,0,0,0,1),
+                                    (1,0,0,0,2,0,2,1,0,2,0,2,0,0,0,1),
+                                    (1,0,0,0,2,0,2,2,0,2,0,2,0,0,0,1),
+                                    (1,0,0,0,2,0,2,2,0,2,0,2,0,0,0,1),
+                                    (1,0,0,0,2,0,0,0,0,2,0,2,0,0,0,1),
+                                    (1,0,0,0,2,2,2,2,2,2,0,2,0,0,0,1),
                                     (1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1),
                                     (1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1),
                                     (1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1),
@@ -78,18 +79,39 @@ begin
      while SDL_PollEvent(event) = 1 do
      begin                                                                //{sterowanie
         if event^.key.keysym.sym = SDLK_ESCAPE then goto stop;            //przejście do markera stop(linia 128)
-        if event^.key.keysym.sym = SDLK_LEFT then rotate := rotate-5;
-        if event^.key.keysym.sym = SDLK_RIGHT then rotate := rotate+5;
+        (*if event^.key.keysym.sym = SDLK_LEFT then rotate := rotate-3;
+        if event^.key.keysym.sym = SDLK_RIGHT then rotate := rotate+3;
         if event^.key.keysym.sym = SDLK_UP then
         begin
-             pl_x := pl_x + round(distray_x(5,rotate));
-             pl_y := pl_y + round(distray_y(5,rotate));
+             pl_x := pl_x + round(distray_x(3,rotate));
+             pl_y := pl_y + round(distray_y(3,rotate));
         end;
                 if event^.key.keysym.sym = SDLK_DOWN then
         begin
-             pl_x := pl_x - round(distray_x(5,rotate));
-             pl_y := pl_y - round(distray_y(5,rotate));
-        end;
+             pl_x := pl_x - round(distray_x(3,rotate));
+             pl_y := pl_y - round(distray_y(3,rotate));
+        end;*)
+     end;
+
+     Keycodes := SDL_GetKeyboardState(nil);
+
+     if Keycodes[SDL_SCANCODE_LEFT] = 1 then
+     begin
+          rotate := rotate-3;
+     end;
+     if Keycodes[SDL_SCANCODE_RIGHT] = 1 then
+     begin
+          rotate := rotate+3;
+     end;
+     if Keycodes[SDL_SCANCODE_UP] = 1 then
+     begin
+        pl_x := pl_x + round(distray_x(3,rotate));
+        pl_y := pl_y + round(distray_y(3,rotate));
+     end;
+     if Keycodes[SDL_SCANCODE_DOWN] = 1 then
+     begin
+        pl_x := pl_x - round(distray_x(3,rotate));
+        pl_y := pl_y - round(distray_y(3,rotate));
      end;
 
      if rotate > 360 then rotate := rotate - 360;
@@ -111,19 +133,20 @@ begin
            if map[block_posx,block_posy]=1 then begin                   //detekcja kolizji promienia
            SDL_SetRenderDrawColor(rend,255-ray_dist*2,0,0,0);           //ustawia kolor czerwony o jasności odwrotnie proporcjonalnej do odległości bloku
                for k1 :=0 to 16 do begin
-               SDL_RenderDrawLine(rend, 800-loop*16+k1, 300-round(300/ray_dist*4),800-loop*16+k1, 300+round(300/ray_dist*4));  //rysuje pionowe linie reprezentujące ściany
+               SDL_RenderDrawLine(rend, 800-loop*16+k1, 300-round(300/ray_dist*8),800-loop*16+k1, 300+round(300/ray_dist*8));  //rysuje pionowe linie reprezentujące ściany
                end;
            end;
            if map[block_posx,block_posy]=2 then begin
-           SDL_SetRenderDrawColor(rend,0,0,255-ray_dist*2+16,0);
+           SDL_SetRenderDrawColor(rend,0,0,255-ray_dist*2,0);
                for k1 :=0 to 16 do begin
-               SDL_RenderDrawLine(rend, 800-loop*16+k1, 300-round(300/ray_dist*4),800-loop*16+k1, 300+round(300/ray_dist*4));   //to samo co powyżej tylko dla ścian niebieskich
+               SDL_RenderDrawLine(rend, 800-loop*16+k1, 300-round(300/ray_dist*8),800-loop*16+k1, 300+round(300/ray_dist*8));   //to samo co powyżej tylko dla ścian niebieskich
                end;
            end;
            if map[block_posx,block_posy]>=1 then break;                    //kończy pętle po wykryciu ściany
         end;
      end;
      SDL_RenderPresent(rend);                                              //wyświetla bufor obrazu
+     SDL_Delay(17);
   until false;
 stop:                                                                        //marker stop użyty do wyłączenia programu przyciskiem ESCAPE
 end.
