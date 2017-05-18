@@ -13,13 +13,14 @@
 program rejkaster;
 uses sdl2;
 
-label stop;                    //pomaga zatrzymać program
 var
   pl_x, pl_y: integer;                      //pozycja widoku(koordynaty zamienione!)
   rotate : real;                            //kąt rotacji
-  loop,k1: integer;                         //zmienne do pętli (loop to względny kąt padania promienia)
+  loop: integer;
+  loop1: real;                                          //zmienne do pętli (loop to względny kąt padania promienia)
   ray_deg: Real;                            //bezwzględny kąt padania promienia
-  ray_dist: integer;                        //dystans przebyty przez promień
+  ray_dist, ray_draw: integer;              //dystans przebyty przez promień
+  draw_yoffset: integer;                    //odległość początku pionowej linii od osi x ekranu
   dist_x,dist_y:real;                       //koordynaty wektora promienia
   block_posx,block_posy:integer;            //punkt padania promienia na mapie
   event: pSDL_event;                        //
@@ -30,10 +31,11 @@ var
 const
 //block_size=8;
 //map_size=128;
-fov=60;
+fov=80;
 scr_width=800;                              //stałe
 scr_height=600;
-draw_dist=120;
+halfheight=300;
+draw_dist=1000;
 map:array[0..15,0..15] of integer =((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1),    //Jedyna słuszna mapa
                                     (1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,1),
                                     (1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,1),
@@ -78,7 +80,7 @@ begin
      writeln('Y: ', pl_x);
      while SDL_PollEvent(event) = 1 do
      begin                                                                //{sterowanie
-        if event^.key.keysym.sym = SDLK_ESCAPE then goto stop;            //przejście do markera stop(linia 128)
+        if event^.key.keysym.sym = SDLK_ESCAPE then halt;            //przejście do markera stop(linia 128)
         (*if event^.key.keysym.sym = SDLK_LEFT then rotate := rotate-3;
         if event^.key.keysym.sym = SDLK_RIGHT then rotate := rotate+3;
         if event^.key.keysym.sym = SDLK_UP then
@@ -119,9 +121,10 @@ begin
 
      SDL_SetRenderDrawColor(rend, 0,0,0,0);
      SDL_RenderClear(rend);
-    for loop:=0 to fov do                                          //rzucanie promienia
+    for loop:=0 to (10*fov) do                                          //rzucanie promienia
     begin
-        ray_deg:=rotate+30-loop;
+        loop1 := loop/10;
+        ray_deg:=rotate+30-loop1;
         for ray_dist:=1 to draw_dist do
         begin
            dist_x:= distray_x(ray_dist,ray_deg);
@@ -129,18 +132,15 @@ begin
            block_posx:=round((pl_x +dist_x) / 8);
            block_posy:=round((pl_y +dist_y) / 8);                       //wyliczanie końcowych koordynatów promienia
            if (block_posx < 0) or (block_posx > 15) then block_posx:=1;
-           if (block_posy < 0) or (block_posy > 15) then block_posy:=1;  //maskuje błąd detekcji nieistniejącego bloku
-           if map[block_posx,block_posy]=1 then begin                   //detekcja kolizji promienia
-           SDL_SetRenderDrawColor(rend,255-ray_dist*2,0,0,0);           //ustawia kolor czerwony o jasności odwrotnie proporcjonalnej do odległości bloku
-               for k1 :=0 to 16 do begin
-               SDL_RenderDrawLine(rend, 800-loop*16+k1, 300-round(300/ray_dist*8),800-loop*16+k1, 300+round(300/ray_dist*8));  //rysuje pionowe linie reprezentujące ściany
-               end;
+           if (block_posy < 0) or (block_posy > 15) then block_posy:=1;  //masakruje błąd detekcji nieistniejącego bloku
+           ray_draw:= ray_dist * round(cos((loop1 - (fov/2))*pi/180));
+           if map[block_posx,block_posy]>=1 then begin                   //detekcja kolizji promienia
+                      case map[block_posx,block_posy] of
+                      1: SDL_SetRenderDrawColor(rend,255-ray_dist*2,0,0,128);		//wybieram kolor bloku
+                      2: SDL_SetRenderDrawColor(rend,0,0,255-ray_dist*2,128);
            end;
-           if map[block_posx,block_posy]=2 then begin
-           SDL_SetRenderDrawColor(rend,0,0,255-ray_dist*2,0);
-               for k1 :=0 to 16 do begin
-               SDL_RenderDrawLine(rend, 800-loop*16+k1, 300-round(300/ray_dist*8),800-loop*16+k1, 300+round(300/ray_dist*8));   //to samo co powyżej tylko dla ścian niebieskich
-               end;
+           draw_yoffset:= round(halfheight/ray_draw*8)-1 ;						//ustawiam długość linii
+           SDL_RenderDrawLine(rend, scr_width-loop, halfheight-draw_yoffset,scr_width-loop, halfheight+draw_yoffset);	//rysuję linię
            end;
            if map[block_posx,block_posy]>=1 then break;                    //kończy pętle po wykryciu ściany
         end;
@@ -148,6 +148,5 @@ begin
      SDL_RenderPresent(rend);                                              //wyświetla bufor obrazu
      SDL_Delay(17);
   until false;
-stop:                                                                        //marker stop użyty do wyłączenia programu przyciskiem ESCAPE
 end.
 
