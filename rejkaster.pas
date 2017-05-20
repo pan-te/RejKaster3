@@ -79,7 +79,7 @@ function draw_line(dist, posx, posy: integer; angle: Real; horizontal: boolean):
                       2: SDL_SetRenderDrawColor(rend,0,abakan,255-dist,128);
                       end;
            draw_yoffset:= round(halfheight/ray_draw*12)-1 ;
-           SDL_RenderDrawLine(rend, scr_width-loop, halfheight-draw_yoffset,scr_width-loop, halfheight+draw_yoffset);	//rysuję linię
+           SDL_RenderDrawLine(rend, loop, halfheight-draw_yoffset,loop, halfheight+draw_yoffset);	//rysuję linię
            draw_line := true;
            end;
            end;
@@ -140,11 +140,11 @@ if Mix_OpenAudio( MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNEL
 
      if Keycodes[SDL_SCANCODE_LEFT] = 1 then
      begin
-          rotate := rotate-3;
+          rotate := rotate+3;
      end;
      if Keycodes[SDL_SCANCODE_RIGHT] = 1 then
      begin
-          rotate := rotate+3;
+          rotate := rotate-3;
      end;
      if Keycodes[SDL_SCANCODE_UP] = 1 then
      begin
