@@ -1,4 +1,4 @@
-function draw_line(dist: Real; posx, posy: integer; angle: Real; anglez: integer): boolean;
+procedure draw_line(dist: Real; posx, posy: integer; angle: Real; anglez: integer);
            var color_draw2: integer;
 	   begin
            ray_draw:= dist*cos((angle - halffov)*degtorad);
@@ -15,7 +15,6 @@ function draw_line(dist: Real; posx, posy: integer; angle: Real; anglez: integer
            SDL_RenderDrawLine(rend, 3*loop, halfheight-draw_yoffset_up+anglez,3*loop, halfheight+draw_yoffset_down+anglez);	//rysuję linię
            SDL_RenderDrawLine(rend, 3*loop+1, halfheight-draw_yoffset_up+anglez,3*loop+1, halfheight+draw_yoffset_down+anglez);	//rysuję linię
            SDL_RenderDrawLine(rend, 3*loop+2, halfheight-draw_yoffset_up+anglez,3*loop+2, halfheight+draw_yoffset_down+anglez);	//rysuję linię
-           draw_line := true;
            end;
 
 procedure DrawBackground(bgimg: pSDL_Texture;zangle: integer) ;

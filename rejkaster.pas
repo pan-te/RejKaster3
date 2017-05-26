@@ -38,7 +38,7 @@ var
   mouse_y: integer;
   movebob_up, movebob_down: real;
   bob_phase: boolean;
-  map:array[0..15,0..15] of integer;
+  //map:array[0..15,0..15] of integer;
   levelname: string;
   //i: integer;
 
@@ -53,15 +53,18 @@ scr_height=900;
 halfheight=450;
 draw_dist=191;
 map_scale=16;
+map:array[0..15,0..15] of integer={$I map.pas}
 
 
 {$I movement.pas}
 {$I rendering.pas}
 
 begin
-  Write('Enter level filename: ');
+ { Write('Enter level filename: ');
   Readln(levelname);
-  load_map(levelname);
+  load_map(levelname);}
+  pl_x:=40;
+  pl_y:=40;
   GameInit();
   load_music();
   background := IMG_LoadTexture(rend, 'back.png');
@@ -91,13 +94,13 @@ begin
         begin
            dist_x:= distray_x(ray_realdist,ray_deg);
            dist_y:= distray_y(ray_realdist,ray_deg);
-           block_posx:=round((pl_x +dist_x)/map_scale);
-           block_posy:=round((pl_y +dist_y)/map_scale);
+	   block_posx:=TRUNC((pl_x +dist_x)/map_scale);
+           block_posy:=TRUNC((pl_y +dist_y)/map_scale);
            if (block_posx < 0) or (block_posx > 15) then block_posx:=1;
            if (block_posy < 0) or (block_posy > 15) then block_posy:=1;  //masakruje błąd detekcji nieistniejącego bloku //wyliczanie końcowych koordynatów promienia
-           if (map[block_posx, block_posy]>=1) then draw_line(ray_realdist, block_posx, block_posy, loop1,rotatez*3);
-           ray_realdist:=ray_realdist+0.2;
-           if map[block_posx,block_posy]>=1 then break;                    //kończy pętle po wykryciu ściany
+	   if (map[block_posx, block_posy]>=1) then draw_line(ray_realdist, block_posx, block_posy, loop1,rotatez*3);
+	   ray_realdist:=ray_realdist+0.2;
+	   if (map[block_posx, block_posy]>=1) then break;
         end;
         loop1 := loop1 + 0.2;
      end;
