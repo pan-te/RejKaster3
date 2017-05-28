@@ -27,7 +27,7 @@ function distray_y(ray_l,alpha:real): real;
 	 
 procedure load_map(mapname:string);
 	 var i,j, k,l: integer;
-		mapfile: file of integer;
+		mapfile: file of smallint;
 	 begin
 		Assign(mapfile, mapname);
 		 Reset(mapfile);
@@ -42,6 +42,7 @@ procedure load_map(mapname:string);
 				if map[k,l]=9 then begin
 					SetPlayer(k,l);
 					map[k,l]:=0;
+					writeln('Player placed at X: ', k, ' Y: ', l);
 					break;
 			 end;
 		end;
@@ -55,12 +56,12 @@ procedure GameInit();
 		  end else writeln ('Initializing SDL... ok.');;
 		  window:= SDL_CreateWindow('RejKaster4',64,64,scr_width,scr_height,SDL_WINDOW_SHOWN);    //SDL_CreateWindow('RejKaster4',SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,scr_width,scr_height,SDL_WINDOW_SHOWN);
 		  new(event);                                               //tworzenie eventu
-		  rend:= SDL_CreateRenderer(window,-1,SDL_RENDERER_SOFTWARE);
+		  rend:= SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED);
 		  SDL_ShowCursor(0);
 		  SDL_SetRenderDrawColor(rend, 0,0,0,0);
 		  SDL_RenderClear(rend);
 		  SDL_RenderPresent(rend);                                   //stworzenie i wyczyszczenie okna
-		  rotate:=90;
+		  rotate:=0;
 		  rotatez:=0;
 	end;
 
