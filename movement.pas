@@ -1,8 +1,8 @@
 {$I misc.pas}
 function QuitProgram(): boolean;
          begin
-             dispose( event );
-             Writeln('Keyboard disposed.');
+             //dispose( event );
+             //Writeln('Keyboard disposed.');
              SDL_DestroyRenderer( rend );
              Writeln('Renderer destroyed.');
              SDL_DestroyWindow( window );
@@ -37,12 +37,12 @@ procedure Stop_Bobbing();
              movebob_down:=1;
              bob_phase:=false;
           end;
-	    
+	
 procedure Controls();
 	begin
-	 while SDL_PollEvent(event) = 1 do
-     begin                                                                //sterowanie
-        if event^.key.keysym.sym = SDLK_ESCAPE then QuitProgram();
+	 while SDL_PollEvent(@event) = 1 do
+     begin                                                                //control
+        if event.key.keysym.sym = SDLK_ESCAPE then QuitProgram();         //event.key.keysym.sym without pointer
      end;
 
      Keycodes := SDL_GetKeyboardState(nil);
@@ -53,7 +53,7 @@ procedure Controls();
           pl_x := pl_x + distray_x(3,rotate);
           pl_y := pl_y + distray_y(3,rotate);
           end;
-	  writeln('Y: ', pl_y:0:2);                                       
+	  writeln('Y: ', pl_y:0:2);
           writeln('X: ', pl_x:0:2);}
 
           if map[round((pl_x + distray_x(3,rotate))/map_scale),round(pl_y/map_scale)] = 0 then
@@ -72,7 +72,7 @@ procedure Controls();
           //if(map[round((pl_x - distray_x(9,rotate))/16), round((pl_y - distray_y(9,rotate))/16)] = 0) then begin
           //pl_x := pl_x - distray_x(3,rotate);
           //pl_y := pl_y - distray_y(3,rotate);
-//          writeln('X: ', pl_y);                                        //wy?wietla pozycje gracza (jak wida? tablica czytana jest inaczej ni? przewidywa?em kurwa jej ma?)
+//          writeln('X: ', pl_y);                                        //displays the player's position (as you can see, the board is read differently than I expected, damn it)
 //          writeln('Y: ', pl_x);
           //end;
 
@@ -94,7 +94,7 @@ procedure Controls();
           //if(map[round((pl_x + distray_x(9,rotate))/16), round((pl_y + distray_y(9,rotate))/16)] = 0) then begin
           //pl_x := pl_x + distray_x(3,rotate);
           //pl_y := pl_y + distray_y(3,rotate);
-//          writeln('X: ', pl_y);                                        //wy?wietla pozycje gracza (jak wida? tablica czytana jest inaczej ni? przewidywa?em kurwa jej ma?)
+//          writeln('X: ', pl_y);                                        //displays the player's position (as you can see, the board is read differently than I expected, damn it)
 //          writeln('Y: ', pl_x);
           //end;
 
@@ -112,7 +112,7 @@ procedure Controls();
           //if(map[round((pl_x - distray_x(9,rotate))/16), round((pl_y - distray_y(9,rotate))/16)] = 0) then begin
           //pl_x := pl_x - distray_x(3,rotate);
           //pl_y := pl_y - distray_y(3,rotate);
-//          writeln('X: ', pl_y);                                        //wy?wietla pozycje gracza (jak wida? tablica czytana jest inaczej ni? przewidywa?em kurwa jej ma?)
+//          writeln('X: ', pl_y);                                        //displays the player's position (as you can see, the board is read differently than I expected, damn it)
 //          writeln('Y: ', pl_x);
           //end;
 
@@ -137,5 +137,5 @@ procedure Controls();
      if rotatez <= -90 then rotatez := -90;
 
      if rotate > 360 then rotate := rotate - 360;
-     if rotate > 0 then rotate := rotate + 360;
+     if rotate <=  0 then rotate := rotate + 360;                        //small bug ?!
      end;

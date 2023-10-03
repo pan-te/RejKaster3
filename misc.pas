@@ -8,7 +8,7 @@ function load_music() : boolean;
            end else Writeln('Playback started.');
            load_music:= true;
    end;
-   
+
 function distray_x(ray_l,alpha:real): real;
          begin
          distray_x:=ray_l*cos(alpha*degtorad);
@@ -18,13 +18,13 @@ function distray_y(ray_l,alpha:real): real;
          begin
          distray_y:=ray_l*sin(alpha*degtorad);
          end;
-	 
+	
 	 procedure SetPlayer(x,y:integer);
 	 begin
-		  pl_x:=map_scale*x+8;
-		  pl_y:=map_scale*y+8;
+		  pl_x:=map_scale*x {-8};       // wrong till now
+		  pl_y:=map_scale*y {-8};       // should be substraction, not an addition!
 	 end;
-	 
+
 procedure load_map(mapname:string);
 	 var i,j, k,l: integer;
 		mapfile: file of smallint;
@@ -49,19 +49,20 @@ procedure load_map(mapname:string);
 	end;
 			 Writeln('Map loaded successfully!');
 	end;
-	 
+	
 procedure GameInit();
 	 begin
 		   if SDL_Init( SDL_INIT_VIDEO or SDL_INIT_AUDIO ) < 0 then begin HALT;
-		  end else writeln ('Initializing SDL... ok.');;
-		  window:= SDL_CreateWindow('RejKaster4',64,64,scr_width,scr_height,SDL_WINDOW_SHOWN);    //SDL_CreateWindow('RejKaster4',SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,scr_width,scr_height,SDL_WINDOW_SHOWN);
-		  new(event);                                               //tworzenie eventu
+		  end else writeln ('Initializing SDL... ok.');
+		   window:= SDL_CreateWindow('RejKaster4',64,64,scr_width,scr_height,SDL_WINDOW_SHOWN);
+				  //SDL_CreateWindow('RejKaster4',SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,scr_width,scr_height,SDL_WINDOW_SHOWN);
+		  //new(event);                                               //creating an event
 		  rend:= SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED);
 		  SDL_ShowCursor(0);
 		  SDL_SetRenderDrawColor(rend, 0,0,0,0);
 		  SDL_RenderClear(rend);
-		  SDL_RenderPresent(rend);                                   //stworzenie i wyczyszczenie okna
+		  SDL_RenderPresent(rend);                                   //creating and cleaning the window
+		  SDL_WarpMouseInWindow(window, 400, 300);                   //initialize mouse
 		  rotate:=0;
 		  rotatez:=0;
 	end;
-

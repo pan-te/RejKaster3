@@ -18,13 +18,13 @@ procedure draw_line(dist: Real; posx, posy: integer; angle: Real; anglez: intege
            end;
 
 procedure DrawBackground(bgimg: pSDL_Texture;zangle: integer) ;
-         var draw_gnd_rect: pSDL_Rect;
+         var draw_gnd_rect: tSDL_Rect;                            //not a pointertype now
          begin
-               new(draw_gnd_rect);
-               draw_gnd_rect^.x:=0;
-               draw_gnd_rect^.y:=zangle*3-269;
-               draw_gnd_rect^.w:=scr_width;
-               draw_gnd_rect^.h:=scr_height+540;
-               SDL_RenderCopy(rend,bgimg,nil,draw_gnd_rect);
+               //new(draw_gnd_rect);                              //memory leak! NEW without DISPOSE!
+               draw_gnd_rect.x:=0;
+               draw_gnd_rect.y:=zangle*3-269;
+               draw_gnd_rect.w:=scr_width;
+               draw_gnd_rect.h:=scr_height+540;
+               SDL_RenderCopy(rend,bgimg,nil,@draw_gnd_rect);
          end;
 

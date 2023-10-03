@@ -2,63 +2,64 @@
 //~~~~~~~~~~(C)by Daniel i Adam Sadlik~~~~~~~
 //~~~~~~~~~~~~~~~~~~2017~~~~~~~~~~~~~~~~~~~~~
 //~~|-------------------------------------|~~
-//~~| Raycasting w możliwie najłatwiejszej|~~
-//~~|wersji. Uwaga! Jest upośledzony.     |~~
-//~~|             (Wykonano w LazarusIDE) |~~
+//~~| Raycasting with more possibilities  |~~
+//~~| version. Attention! He is retarded. |~~
+//~~|                (Made in LazarusIDE) |~~
 //~~|Enjoy!_______________________________|~~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~12.01.2017
 
 
 program rejkaster;
-uses sdl2, SDL2_mixer, SDL2_image;
-{$ASMMODE intel}                            //ustawienie składni assemblera, niepotrzebne
+uses crt, sdl2, SDL2_mixer, SDL2_image;
+{$ASMMODE intel}                            //assembly syntax setting, unnecessary
 var
-  pl_x, pl_y: real;                      //pozycja widoku(koordynaty zamienione!)
-  rotate : real;                            //kąt rotacji
+  pl_x, pl_y: real;                      //view position(coordinates swapped!)
+  rotate : real;                            //rotation angle
   rotatez : integer;
   loop: integer;
-  loop1: real;                                          //zmienne do pętli (loop to względny kąt padania promienia)
-  ray_deg: Real;                            //bezwzględny kąt padania promienia
-  ray_dist: integer;                        //dystans przebyty przez promień
+  loop1: real;                                          //variables to the loop (loop is the relative angle of incidence of the ray)
+  ray_deg: Real;                            //absolute angle of incidence of the ray
+  ray_dist: integer;                        //distance traveled by the ray
   ray_realdist: real;
-  draw_yoffset_up, draw_yoffset_down: integer;                    //odległość początku pionowej linii od osi x ekranu
+  draw_yoffset_up, draw_yoffset_down: integer;                    //distance of the beginning of the vertical line from the x-axis of the screen
   draw_yoffset2: real;
   ray_draw: Real;
   color_draw: integer;
-  dist_x,dist_y:real;                       //koordynaty wektora promienia
-  block_posx,block_posy:integer;            //punkt padania promienia na mapie
-  event: pSDL_event;                        //event klawiatury
-  rend: pSDL_renderer;                      //zmienne specyficzne dla SDL
+  dist_x,dist_y:real;                       //radius vector coordinates
+  block_posx,block_posy:integer;            //the point of incidence of the ray on the map
+  event: tSDL_event;                        //keyboard event now not a pointertype
+  rend: pSDL_renderer;                      //SDL-specific variables
   window:  pSDL_window;
   music: PMIX_music;
-  Keycodes:  ^byte;                         //stan klawiatury
+  Keycodes:  ^byte;                         //keyboard status
   background: pSDL_Texture;
-  mouse_x: integer;                         // Pozycja kursora
+  mouse_x: integer;                         // Cursor position
   mouse_y: integer;
   movebob_up, movebob_down: real;
   bob_phase: boolean;
-  map:array[0..15,0..15] of integer;
+  map:array[0..15,0..15] of smallint;
   levelname: string;
   //i: integer;
 
-const
+const                                       //Constant
 //block_size=8;
 //map_size=128;
-fov=80;
-halffov=40;
+fov=80;                                     //degree angle;  5*80 = 400 pixel = fov in pixel  (400x300)
+halffov=40;                                 //degree angle
 degtorad=0.01745;
-scr_width=1200;                              //stałe
-scr_height=900;
+scr_width=1200;                             //size of window  (1200x900)
+scr_height=900;                             //size of window
 halfheight=450;
 draw_dist=191;
-map_scale=16;
+map_scale=16;                               //size of wall block (square of the grid)
 
 
 {$I movement.pas}
 {$I rendering.pas}
 
 begin
+  clrscr;
   Write('Enter level filename: ');
   Readln(levelname);
   load_map(levelname);
@@ -78,12 +79,12 @@ begin
   Writeln('==Esc------quit program====================');
   Writeln('==================Enjoy====================');
   Writeln();
-  
-    repeat                                                          //początek głównej pętli
+
+    repeat                                                          //beginning of the main loop
      Controls();
      DrawBackground(background, rotatez);
      loop1 := 0;
-    for loop:=0 to (5*fov) do                                          //rzucanie promienia
+    for loop:=0 to (5*fov) do                                          //casting a ray
     begin
         ray_deg:=rotate+halffov-loop1;
         ray_realdist:=0;
@@ -94,10 +95,10 @@ begin
            block_posx:=round((pl_x +dist_x)/map_scale);
            block_posy:=round((pl_y +dist_y)/map_scale);
            if (block_posx < 0) or (block_posx > 15) then block_posx:=1;
-           if (block_posy < 0) or (block_posy > 15) then block_posy:=1;  //masakruje błąd detekcji nieistniejącego bloku //wyliczanie końcowych koordynatów promienia
+           if (block_posy < 0) or (block_posy > 15) then block_posy:=1;  //kills the error of detecting a non-existent block //calculating the final coordinates of the ray
            if (map[block_posx, block_posy]>=1) then draw_line(ray_realdist, block_posx, block_posy, loop1,rotatez*3);
            ray_realdist:=ray_realdist+0.2;
-           if map[block_posx,block_posy]>=1 then break;                    //kończy pętle po wykryciu ściany
+           if map[block_posx,block_posy]>=1 then break;                    //ends the loop when a wall is detected
         end;
         loop1 := loop1 + 0.2;
      end;
