@@ -218,8 +218,8 @@ begin
 
   SDL_GetMouseState(@mouse_x, @mouse_y);
 
-  rotate  := rotate  + round((FOVWinX - mouse_x) / 3);        //rotate horizontal;  rotate players view / direction
-  rotateZ := rotateZ + round((FOVWinY - mouse_y) / 2);        //rotate vertical;    looking up or down
+  rotate  := rotate  + round((400 - mouse_x) / 3);            //rotate horizontal;  rotate players view / direction
+  rotateZ := rotateZ + round((300 - mouse_y) / 2);            //rotate vertical;    looking up or down
 
   SDL_WarpMouseInWindow(window, 400, 300);                    //move the mouse cursor to the given position withhin the window ?!
 
