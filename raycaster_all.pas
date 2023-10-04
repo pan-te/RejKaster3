@@ -125,7 +125,7 @@ begin
   SDL_SetRenderDrawColor(rend, 0, 0, 0, 0);                  //black color
   SDL_RenderClear(rend);
   SDL_RenderPresent(rend);                                   //creating and cleaning the window
-  SDL_WarpMouseInWindow(window, FOVWinX, FOVWinY);           //initializing MousePos in FOV-Window  ??
+  SDL_WarpMouseInWindow(window, 400, 300);                   //initializing MousePos 
   rotate  := 0.0;                                            //angle of playerview
   rotateZ := 0;                                              //angle of playerview
 end;
@@ -221,7 +221,7 @@ begin
   rotate  := rotate  + round((FOVWinX - mouse_x) / 3);        //rotate horizontal;  rotate players view / direction
   rotateZ := rotateZ + round((FOVWinY - mouse_y) / 2);        //rotate vertical;    looking up or down
 
-  SDL_WarpMouseInWindow(window, FOVWinX, FOVWinY);            //move the mouse cursor to the given position withhin the window ?!
+  SDL_WarpMouseInWindow(window, 400, 300);                    //move the mouse cursor to the given position withhin the window ?!
 
   if rotateZ >=  90 then rotateZ :=  90;
   if rotateZ <= -90 then rotateZ := -90;
