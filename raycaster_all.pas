@@ -10,7 +10,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~12.01.2017
 //without memory holes; tested with: fpc -Criot -gl -gh raycaster_all.pas
-//last changes:  03.10.23
+//last changes:  04.10.23
 
 program raycaster;
 
@@ -21,21 +21,23 @@ const                                            //Constant
   halfFOV    = 40;                               //degree
   FOVWinX    = 400;                              //Field of View in pixel; x direction
   FOVWinY    = 300;                              //Field of View in pixel; y direction
-  degtorad   = 0.01745;
+  degtorad   = 0.01745;                          //(Pi / 180 Grad) = (RAD to Grad)
   scr_width  = 1200;                             //Screen width
   scr_height = 900;                              //Screen height
   halfheight = 450;
+  mouswidth  = 400;                              //theoretical half of screenwidth = 600;  will be mousePos startpoint in game
+  mousheight = 300;                              //theoretical half of screenheight= 450;
   map_scale  = 16;                               //can also be larger: [ 32 or 64 ]: size of wall block (square of the grid)
   draw_dist  = 191;                              //draw_dist := map_scale * 5 - 1; [ 191 := 16 * 5 -1 ] how far you can see in pixel
   max_Anz    = 15;                               //width AND height of the map, till now
-  player_mov = 3;
+  player_mov = 3;                                //player moves 3 pixels
   levelname  = 'test.map';                       //map name
 
 var
   pl_x,
   pl_y              : real;                      //view position(coordinates swapped!)
-  rotate            : real;                      //rotation angle
-  rotateZ           : integer;                   //rotation angle
+  rotate            : real;                      //rotation angle  left / right
+  rotateZ           : integer;                   //rotation angle  up   / down
   loop              : integer;
   loop1             : real;                      //variables to the loop (loop is the relative angle of incidence of the ray)
   ray_deg           : real;                      //absolute angle of incidence of the ray
@@ -86,8 +88,8 @@ end;
 
 procedure SetPlayer(x, y : integer);
 begin
-  pl_x := map_scale * x { - mapscale DIV 2};    // player positioned in middle of the square ?!
-  pl_y := map_scale * y { - mapscale DIV 2};    // without substract (!) half of the square !! (map_scale DIV 2 = 8)
+  pl_x := map_scale * x { - mapscale DIV 2};     // player positioned in middle of the square ?!
+  pl_y := map_scale * y { - mapscale DIV 2};     // without substract (!) half of the square !! (map_scale DIV 2 = 8)
 end;
 
 procedure load_map(mapname : string);
@@ -117,17 +119,17 @@ end;
 
 procedure GameInit;
 begin
-  if SDL_Init( SDL_INIT_VIDEO or SDL_INIT_AUDIO ) < 0 then HALT
+  if SDL_Init( SDL_INIT_VIDEO OR SDL_INIT_AUDIO ) < 0 then HALT
                                                       else writeln ('Initializing SDL... ok.');
   window := SDL_CreateWindow('Raycaster4', SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, scr_width, scr_height, SDL_WINDOW_SHOWN);
   rend := SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-  SDL_ShowCursor(0);                                         //don't show (mouse) cursor in the window
-  SDL_SetRenderDrawColor(rend, 0, 0, 0, 0);                  //black color
+  SDL_ShowCursor(0);                                                         //don't show (mouse) cursor in the window
+  SDL_SetRenderDrawColor(rend, 0, 0, 0, 0);                                  //black color
   SDL_RenderClear(rend);
-  SDL_RenderPresent(rend);                                   //creating and cleaning the window
-  SDL_WarpMouseInWindow(window, 400, 300);                   //initializing MousePos 
-  rotate  := 0.0;                                            //angle of playerview
-  rotateZ := 0;                                              //angle of playerview
+  SDL_RenderPresent(rend);                                                   //creating and cleaning the window
+  SDL_WarpMouseInWindow(window, mouswidth, mousheight);                      //initializing MousePos
+  rotate  := 0.0;                                                            //angle of playerview
+  rotateZ := 0;                                                              //angle of playerview
 end;
 
 function QuitProgram: boolean;
@@ -149,18 +151,18 @@ end;
 
 procedure Set_Movebob;
 begin
-  if ((movebob_up > 1.0) and (bob_phase = false)) then
+  if ((movebob_up > 1.0) AND (bob_phase = false)) then
   begin
     movebob_up   := movebob_up   - 0.05;
     movebob_down := movebob_down + 0.05;
  end;
- if ((movebob_up <= 1.0) and (bob_phase = false)) then bob_phase := true;
- if ((movebob_up <  1.5) and (bob_phase = true)) then
+ if ((movebob_up <= 1.0) AND (bob_phase = false)) then bob_phase := true;
+ if ((movebob_up <  1.5) AND (bob_phase = true)) then
  begin
    movebob_up   := movebob_up   + 0.05;
    movebob_down := movebob_down - 0.05;
  end;
- if ((movebob_up >= 1.5) and (bob_phase = true)) then bob_phase := false;
+ if ((movebob_up >= 1.5) AND (bob_phase = true)) then bob_phase := false;
 end;
 
 procedure Stop_Bobbing;
@@ -172,8 +174,8 @@ end;
 
 procedure Controls;
 begin
-  while SDL_PollEvent(@event) = 1 do
-  begin                                                                //control
+  while SDL_PollEvent(@event) = 1 do             //control
+  begin
     if event.key.keysym.sym = SDLK_ESCAPE then QuitProgram();
   end;
 
@@ -197,8 +199,8 @@ begin
     Set_Movebob();
   end;
 
-  if (Keycodes[SDL_SCANCODE_W] = 0) and (Keycodes[SDL_SCANCODE_S] = 0) AND
-     (Keycodes[SDL_SCANCODE_UP] = 0) and (Keycodes[SDL_SCANCODE_DOWN] = 0) then Stop_Bobbing();
+  if (Keycodes[SDL_SCANCODE_W] = 0) AND (Keycodes[SDL_SCANCODE_S] = 0) AND
+     (Keycodes[SDL_SCANCODE_UP] = 0) AND (Keycodes[SDL_SCANCODE_DOWN] = 0) then Stop_Bobbing();
 
   if (Keycodes[SDL_SCANCODE_A] = 1) OR (Keycodes[SDL_SCANCODE_LEFT] = 1) then
   begin
@@ -218,16 +220,16 @@ begin
 
   SDL_GetMouseState(@mouse_x, @mouse_y);
 
-  rotate  := rotate  + round((400 - mouse_x) / 3);            //rotate horizontal;  rotate players view / direction
-  rotateZ := rotateZ + round((300 - mouse_y) / 2);            //rotate vertical;    looking up or down
+  rotate  := rotate  + round((mouswidth  - mouse_x) / 3);                    //rotate horizontal;  rotate players view / direction
+  rotateZ := rotateZ + round((mousheight - mouse_y) / 2);                    //rotate vertical;    looking up or down
 
-  SDL_WarpMouseInWindow(window, 400, 300);                    //move the mouse cursor to the given position withhin the window ?!
-
-  if rotateZ >=  90 then rotateZ :=  90;
+  SDL_WarpMouseInWindow(window, mouswidth, mousheight);                      //move the mouse cursor to the given position withhin the window ?!
+                                                                             //here window = 1200x900; Mousewidth/height 400x300 little left/under
+  if rotateZ >=  90 then rotateZ :=  90;                                     //the middle of the screen
   if rotateZ <= -90 then rotateZ := -90;
 
   if rotate > 360 then rotate := rotate - 360;
-  if rotate <=  0 then rotate := rotate + 360;                //fixed bug
+  if rotate <=  0 then rotate := rotate + 360;                               //fixed bug
 end;
 
 procedure draw_line(dist : real; posx, posy : integer; angle : real; angleZ : integer);
@@ -269,7 +271,7 @@ begin
   load_music();
   background := IMG_LoadTexture(rend, 'back.png');
   Stop_Bobbing();
-  //SDL_Delay(10000);
+
   Writeln('================Raycaster 4================');
   Writeln('Copyright by Perfection Games Studios, 2017');
   Writeln('======Rendering engine: Daniel Sadlik======');
@@ -292,13 +294,13 @@ begin
       ray_realdist := 0;
       for ray_dist := 1 to (5 * draw_dist) do
       begin
-        dist_x := distray_x(ray_realdist, ray_deg);                          //searching for a wall; increase the raylength [ray_realdist] with a small amount [ here 0.2 pixel ]
+        dist_x := distray_x(ray_realdist, ray_deg);                          //search for a wall; increase the raylength [ray_realdist] with a small amount [ here 0.2 pixel ]
         dist_y := distray_y(ray_realdist, ray_deg);
-        block_posx := round((pl_x + dist_x) / map_scale);                    //controlling, if you hit a wall...
+        block_posx := round((pl_x + dist_x) / map_scale);                    //control if the ray hits a wall...
         block_posy := round((pl_y + dist_y) / map_scale);
 
-        if (block_posx < 0) or (block_posx > max_Anz) then block_posx := 1;  //kills the error of detecting a non-existent block
-        if (block_posy < 0) or (block_posy > max_Anz) then block_posy := 1;  //calculating the final coordinates of the ray
+        if (block_posx < 0) OR (block_posx > max_Anz) then block_posx := 1;  //kills the error of detecting a non-existent block
+        if (block_posy < 0) OR (block_posy > max_Anz) then block_posy := 1;  //calculating the final coordinates of the ray
 
         if (map[block_posx, block_posy] >= 1) then draw_line(ray_realdist, block_posx, block_posy, loop1, rotateZ * 3);
         ray_realdist := ray_realdist + 0.2;                                  //increase the length of the searching ray [ ray_realdist ]
