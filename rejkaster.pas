@@ -8,11 +8,12 @@
 //~~|Enjoy!_______________________________|~~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~12.01.2017
-
+//without memory holes; tested with: fpc -Criot -gl -gh raycaster_all.pas
+//last changes:  10.10.23
 
 program rejkaster;
-{$mode objFPC}                                  //object pascal extension on; [ or use $mode FPC or $mode DELPHI ]
-uses crt, sdl2, SDL2_mixer, SDL2_image;
+{$mode objFPC}                                   //object pascal extension on; [ or use $mode FPC or $mode DELPHI ]
+uses crt, SDL2, SDL2_mixer, SDL2_image;
 
 const
   FOV        = 80;                               //Field of View: 80 degree
@@ -28,6 +29,8 @@ const
   mouswidth  = 400;                              //theoretical half of screenwidth = 600;  will be mousePos startpoint in game
   mousheight = 300;                              //theoretical half of screenheight= 450;
   map_scale  = 16;                               //can also be larger: [ 32 or 64 ]: size of wall block (square of the grid)
+  div_SHR    = 4;                                //[div by mapscale] [= 16] can translated to [SHR 4]  div_SHR MUST be 2^x = map_scale!!!!
+                                                 //16=2^4   32=2^5   64=2^6  128=2^7... map_scale=2^div_SHR !!
   draw_dist  = 191;                              //draw_dist := map_scale * 5 - 1; [ 191 := 16 * 5 -1 ] how far you can see in pixel
   max_Anz    = 15;                               //width and height of the (square-) map
   player_mov = 3;                                //player moves 3 pixels
@@ -36,11 +39,13 @@ const
 var
   pl_x,
   pl_y              : real;                      //view position(coordinates swapped!)
-  rotate            : real;                      //horizontal rotation angle  left / right
-  rotateZ           : integer;                   //vertical rotation angle    up   / down
+  rotate,                                        //horizontal rotation angle  left / right
+  rotateZ           : real;                      //vertical rotation angle    up   / down
   loop              : integer;
   loop1             : real;                      //variables to the loop (loop is the relative angle of incidence of the ray)
-  ray_deg           : real;                      //absolute angle of incidence of the ray
+  ray_deg,                                       //absolute angle of incidence of the ray
+  ray_deg_sin,                                   //help var for sin(ray_deg)
+  ray_deg_cos       : real;                      //help var for cos(ray_deg)
   ray_dist          : integer;                   //loop variable like i or j
   ray_realdist      : real;                      //length of the searching ray in pixel, will be increased during the main loop
   draw_yoffset_up,
@@ -91,24 +96,27 @@ begin
   Writeln();
 
   repeat                                                                     //beginning of the main loop
-    Controls;                                                                //read keyboard
+    Controls(rotate, rotateZ);                                               //read keyboard
     DrawBackground(background, rotateZ);
     loop1 := 0.0;
     for loop := 0 to FOVWinX do                                              //casting a ray
     begin
       ray_deg := rotate + halfFOV - loop1;                                   //ray angle in degree
       ray_realdist := 0;
+      ray_deg_cos := cos(ray_deg * degtorad);                                //cos of ray is const during calculate the ray; calculate outside of the loop!
+      ray_deg_sin := sin(ray_deg * degtorad);                                //sin of ray is const during calculate the ray; calculate outside of the loop!
       for ray_dist := 1 to (5 * draw_dist) do                                //5*draw_dist: max length of the ray without hit a wall
       begin
-        dist_x := distray_x(ray_realdist, ray_deg);                          //search for a wall in x; increase the raylength [ray_realdist] with
-        dist_y := distray_y(ray_realdist, ray_deg);                          //a small amount [ here 0.2 pixel ] at the end of the loop
-        block_posx := round((pl_x + dist_x) / map_scale);                    //control: if the ray hits a wall...
-        block_posy := round((pl_y + dist_y) / map_scale);
+        dist_x := ray_realdist * ray_deg_cos;                                //search for a wall in x; increase the raylength [ray_realdist] with
+        dist_y := ray_realdist * ray_deg_sin;                                //a small amount [ here 0.2 pixel ] at the end of the loop
+        block_posx := trunc(pl_x + dist_x) SHR div_SHR;                      //control: if the ray hits a wall...
+        block_posy := trunc(pl_y + dist_y) SHR div_SHR;
 
         if (block_posx < 0) OR (block_posx > max_Anz) then block_posx := 1;  //kills the error of detecting a non-existent block
         if (block_posy < 0) OR (block_posy > max_Anz) then block_posy := 1;  //calculating the final coordinates of the ray
 
-        if (map[block_posx, block_posy] >= 1) then draw_line(ray_realdist, block_posx, block_posy, loop1, rotateZ * 3);
+        if (map[block_posx, block_posy] >= 1) then
+          draw_line(ray_realdist, block_posx, block_posy, loop1, rotateZ * 3);
         ray_realdist := ray_realdist + ray_dL;                               //increase the length of the searching ray [ ray_realdist ]
         if map[block_posx, block_posy] >= 1 then break;                      //ends the loop when a wall is detected
       end;
