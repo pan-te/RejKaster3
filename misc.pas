@@ -21,8 +21,8 @@ function distray_y(ray_l,alpha:real): real;
 	
 	 procedure SetPlayer(x,y:integer);
 	 begin
-		  pl_x:=map_scale*x;       // player positioned in middle of the square !
-		  pl_y:=map_scale*y;       // without substract (!) half of the square !! (map_scale DIV 2 = 8)
+		  pl_x:=map_scale*x+map_scale DIV 2;       // player positioned in middle of the square !
+		  pl_y:=map_scale*y+map_scale DIV 2;       //with add half of the square !! (map_scale DIV 2 = 8)
 	 end;
 
 procedure load_map(mapname:string);

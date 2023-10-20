@@ -52,7 +52,7 @@ procedure generate_map();
 			for k := 0 to 15 do begin      // show ascii map on screen
 			  for l := 0 to 15 do begin
 				if map[k,l] = 0 then write('  ')
-								else write(map[k,l], ' ');
+				                else write(map[k,l], ' ');
 				end;
 				writeln;
 			end;

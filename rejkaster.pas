@@ -41,6 +41,8 @@ var
   loop              : integer;
   loop1             : real;                      //variables to the loop (loop is the relative angle of incidence of the ray)
   ray_deg           : real;                      //absolute angle of incidence of the ray
+  ray_deg_sin,
+  ray_deg_cos       : real;
   ray_dist          : integer;                   //loop variable like i or j
   ray_realdist      : real;                      //length of the searching ray in pixel, will be increased during the main loop
   draw_yoffset_up,
@@ -98,12 +100,14 @@ begin
     begin
       ray_deg := rotate + halfFOV - loop1;                                   //ray angle in degree
       ray_realdist := 0;
+      ray_deg_cos := cos(ray_deg * degtorad);                                //cos of ray is const during calculate the ray; calculate outside of the loop!
+      ray_deg_sin := sin(ray_deg * degtorad);                                //sin of ray is const during calculate the ray; calculate outside of the loop!
       for ray_dist := 1 to (5 * draw_dist) do                                //5*draw_dist: max length of the ray without hit a wall
       begin
-        dist_x := distray_x(ray_realdist, ray_deg);                          //search for a wall in x; increase the raylength [ray_realdist] with
-        dist_y := distray_y(ray_realdist, ray_deg);                          //a small amount [ here 0.2 pixel ] at the end of the loop
-        block_posx := round((pl_x + dist_x) / map_scale);                    //control: if the ray hits a wall...
-        block_posy := round((pl_y + dist_y) / map_scale);
+        dist_x := ray_realdist * ray_deg_cos;                                //search for a wall in x; increase the raylength [ray_realdist] with
+        dist_y := ray_realdist * ray_deg_sin;                                //a small amount [ here 0.2 pixel ] at the end of the loop
+        block_posx := trunc((pl_x + dist_x) / map_scale);                    //control: if the ray hits a wall...
+        block_posy := trunc((pl_y + dist_y) / map_scale);
 
         if (block_posx < 0) OR (block_posx > max_Anz) then block_posx := 1;  //kills the error of detecting a non-existent block
         if (block_posy < 0) OR (block_posy > max_Anz) then block_posy := 1;  //calculating the final coordinates of the ray
@@ -118,4 +122,3 @@ begin
     SDL_Delay(17);                                                           //delay 17 miliseconds equal to 60 FPS = Frames per second
   until false;                                                               //end of main loop
 end.
-
