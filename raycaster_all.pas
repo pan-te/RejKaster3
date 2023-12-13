@@ -10,7 +10,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~12.01.2017
 //without memory holes; tested with: fpc -Criot -gl -gh raycaster_all.pas
-//last changes:  11.10.23
+//last changes:  13.12.23
 
 program raycaster;
 {$mode objFPC}                                  //object pascal extension on; [ or use $mode FPC or $mode DELPHI ]
@@ -42,22 +42,11 @@ var
   pl_y              : real;                      //view position(coordinates swapped!)
   rotate,                                        //horizontal rotation angle  left / right
   rotateZ           : real;                      //vertical rotation angle    up   / down
-  loop              : integer;
-  loop1             : real;                      //variables to the loop (loop is the relative angle of incidence of the ray)
-  ray_deg,                                       //absolute angle of incidence of the ray
-  ray_deg_sin,                                   //help var for sin(ray_deg)
-  ray_deg_cos       : real;                      //help var for cos(ray_deg)
-  ray_dist          : integer;                   //loop variable like i or j
-  ray_realdist      : real;                      //length of the searching ray in pixel, will be increased during the main loop
   draw_yoffset_up,
   draw_yoffset_down : integer;                   //distance of the beginning of the vertical line from the x-axis of the screen
   draw_yoffset2     : real;
   ray_draw          : real;
   color_draw        : integer;
-  dist_x,
-  dist_y            : real;                      //radius vector coordinates
-  block_posx,
-  block_posy        : integer;                   //the point of incidence of the ray on the map
   event             : TSDL_event;                //keyboard event
   renderer          : PSDL_renderer;             //SDL2-specific variables
   window            : PSDL_window;
@@ -259,10 +248,11 @@ begin
   if rotate1 <=  0 then rotate1 := rotate1 + 360;
 end;
 
-procedure draw_line(dist : real; posx, posy : integer; angle, angleZ : real);
+procedure draw_line(dist : real; posx, posy, loop : integer; angle, angleZ : real);
 var r1, r2, g, b : byte;
     angleZ1, y_up, y_down,
     color_draw2 : integer;
+    source, target : TSDL_Rect;
 
 begin
   angleZ1 := TRUNC(angleZ);                                                  //helping variable
@@ -271,8 +261,8 @@ begin
   color_draw2 := trunc(color_draw * 2 / 3);
   r1 := 192 - color_draw;                                                    //red
   r2 := 129 - color_Draw2;                                                   //red
-  g := 128 - color_draw2;                                                    //green
-  b := 192 - color_draw;                                                     //blue
+  g  := 128 - color_draw2;                                                   //green
+  b  := 192 - color_draw;                                                    //blue
 
   case map[posx, posy] of
     1: SDL_SetRenderDrawColor(renderer, r1, g, 0, 0);                        //colors: red green blue
@@ -289,6 +279,7 @@ begin
   SDL_RenderDrawLine(renderer, 3 * loop,     y_up, 3 * loop,     y_down);    //draw a linie
   SDL_RenderDrawLine(renderer, 3 * loop + 1, y_up, 3 * loop + 1, y_down);    //draw a linie
   SDL_RenderDrawLine(renderer, 3 * loop + 2, y_up, 3 * loop + 2, y_down);    //draw a linie
+//  SDL_RenderDrawLine(renderer, 4 * loop + 3, y_up, 4 * loop + 3, y_down);    //draw a linie
 end;
 
 procedure DrawBackground(bgImg : PSDL_Texture; angleZ : real);
@@ -299,6 +290,48 @@ begin
   draw_gnd_rect.w := scr_width;
   draw_gnd_rect.h := scr_height + 540;
   SDL_RenderCopy(renderer, bgImg, nil, @draw_gnd_rect);
+end;
+
+procedure gameloop(rotate1, rotateZ1 : real);
+var loop_             : integer;
+    loop1             : real;                      //variables to the loop (loop is the relative angle of incidence of the ray)
+    ray_dist          : integer;                   //loop variable like i or j
+    ray_realdist,                                  //length of the searching ray in pixel, will be increased during the main loop
+    ray_deg,                                       //absolute angle of incidence of the ray
+    ray_deg_sin,                                   //help var for sin(ray_deg)
+    ray_deg_cos,                                   //help var for cos(ray_deg)
+    dist_x,
+    dist_y            : real;                      //radius vector coordinates
+    block_posx,
+    block_posy        : integer;                   //the point of incidence of the ray on the map
+
+begin
+  loop1 := 0.0;
+  for loop_ := 0 to FOVWinX do                                              //casting a ray
+  begin
+    ray_deg := rotate1 + halfFOV - loop1;                                   //ray angle in degree
+    ray_realdist := 0;
+    ray_deg_cos := cos(ray_deg * degtorad);                                //cos of ray is const during calculate the ray; calculate outside of the loop!
+    ray_deg_sin := sin(ray_deg * degtorad);                                //sin of ray is const during calculate the ray; calculate outside of the loop!
+
+    for ray_dist := 1 to (5 * draw_dist) do                                //5*draw_dist: max length of the ray without hit a wall
+    begin
+      dist_x := ray_realdist * ray_deg_cos;                                //search for a wall in x; increase the raylength [ray_realdist] with
+      dist_y := ray_realdist * ray_deg_sin;                                //a small amount [ here 0.2 pixel ] at the end of the loop
+      block_posx := trunc(pl_x + dist_x) SHR div_SHR;                      //control: if the ray hits a wall...
+      block_posy := trunc(pl_y + dist_y) SHR div_SHR;
+
+      if (block_posx < 0) OR (block_posx > max_Anz) then block_posx := 1;  //kills the error of detecting a non-existent block
+      if (block_posy < 0) OR (block_posy > max_Anz) then block_posy := 1;  //calculating the final coordinates of the ray
+
+      if (map[block_posx, block_posy] >= 1) then
+        draw_line(ray_realdist, block_posx, block_posy, loop_, loop1, rotateZ1 * 3);
+
+      ray_realdist := ray_realdist + ray_dL;                               //increase the length of the searching ray [ ray_realdist ]
+      if map[block_posx, block_posy] >= 1 then break;                      //ends the loop when a wall is detected
+    end;
+    loop1 := loop1 + ray_dG;                                               //change the angle of the ray [ here 0.2 degree ]
+  end;
 end;
 
 begin
@@ -324,32 +357,7 @@ begin
   repeat                                                                     //beginning of the main loop
     Controls(rotate, rotateZ);                                               //read keyboard
     DrawBackground(background, rotateZ);
-    loop1 := 0.0;
-    for loop := 0 to FOVWinX do                                              //casting a ray
-    begin
-      ray_deg := rotate + halfFOV - loop1;                                   //ray angle in degree
-      ray_realdist := 0;
-      ray_deg_cos := cos(ray_deg * degtorad);                                //cos of ray is const during calculate the ray; calculate outside of the loop!
-      ray_deg_sin := sin(ray_deg * degtorad);                                //sin of ray is const during calculate the ray; calculate outside of the loop!
-
-      for ray_dist := 1 to (5 * draw_dist) do                                //5*draw_dist: max length of the ray without hit a wall
-      begin
-        dist_x := ray_realdist * ray_deg_cos;                                //search for a wall in x; increase the raylength [ray_realdist] with
-        dist_y := ray_realdist * ray_deg_sin;                                //a small amount [ here 0.2 pixel ] at the end of the loop
-        block_posx := trunc(pl_x + dist_x) SHR div_SHR;                      //control: if the ray hits a wall...
-        block_posy := trunc(pl_y + dist_y) SHR div_SHR;
-
-        if (block_posx < 0) OR (block_posx > max_Anz) then block_posx := 1;  //kills the error of detecting a non-existent block
-        if (block_posy < 0) OR (block_posy > max_Anz) then block_posy := 1;  //calculating the final coordinates of the ray
-
-        if (map[block_posx, block_posy] >= 1) then
-          draw_line(ray_realdist, block_posx, block_posy, loop1, rotateZ * 3);
-
-        ray_realdist := ray_realdist + ray_dL;                               //increase the length of the searching ray [ ray_realdist ]
-        if map[block_posx, block_posy] >= 1 then break;                      //ends the loop when a wall is detected
-      end;
-      loop1 := loop1 + ray_dG;                                               //change the angle of the ray [ here 0.2 degree ]
-    end;
+    gameloop(rotate, rotateZ);
     SDL_RenderPresent(renderer);                                             //update the screen with any rendering performed since the previous call
     SDL_Delay(17);                                                           //delay 17 miliseconds equal to 60 FPS = Frames per second
   until false;                                                               //end of main loop
